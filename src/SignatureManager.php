@@ -50,7 +50,7 @@ class SignatureManager
      */
     public function signer($name = null)
     {
-        $name = $name ?: $this->getDefaultSigner();
+        $name = $name ? : $this->getDefaultSigner();
 
         if (! isset($this->signers[$name])) {
             $this->signers[$name] = $this->resolve($name);

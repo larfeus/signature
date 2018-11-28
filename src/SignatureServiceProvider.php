@@ -4,6 +4,7 @@ namespace Larfeus\Signature;
 
 use Larfeus\Signature\SignatureManager;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
+use Larfeus\Signature\Middleware\Signature as SignatureMiddleware;
 
 class SignatureServiceProvider extends LaravelServiceProvider
 {
@@ -17,17 +18,18 @@ class SignatureServiceProvider extends LaravelServiceProvider
      */
     public function boot()
     {
-        $this->setupConfig();
+        $this->bootConfig();
+        $this->registerMiddleware();
     }
 
     /**
-     * Setup.
+     * Setup config.
      */
-    protected function setupConfig()
+    protected function bootConfig()
     {
         $source = realpath(__DIR__.'/config/signature.php');
 
-        if (preg_match('/Lumen/', $this->app->version())) {
+        if ($this->isLumen()) {
             $this->app->configure('signature');
         } else {
             if ($this->app->runningInConsole()) {
@@ -38,6 +40,26 @@ class SignatureServiceProvider extends LaravelServiceProvider
         }
 
         $this->mergeConfigFrom($source, 'signature');
+    }
+
+    /**
+     * Register middlewares.
+     */
+    protected function registerMiddleware()
+    {
+        $middlewares = [
+            'signature' => SignatureMiddleware::class,
+        ];
+
+        if ($this->isLumen()) {
+            $this->app->routeMiddleware($middlewares);
+        } else {
+            $router = $this->app['router'];
+            $method = method_exists($router, 'aliasMiddleware') ? 'aliasMiddleware' : 'middleware';
+            foreach ($middlewares as $alias => $middleware) {
+                $router->$method($alias, $middleware);
+            }
+        }
     }
 
     /**
@@ -60,5 +82,15 @@ class SignatureServiceProvider extends LaravelServiceProvider
         return [
             SignatureManager::class
         ];
+    }
+
+    /**
+     * Return isLumen.
+     *
+     * @return boolean
+     */
+    protected function isLumen()
+    {
+        return str_contains($this->app->version(), 'Lumen');
     }
 }

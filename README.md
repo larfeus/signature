@@ -32,9 +32,32 @@ $app->withFacades(true, [
 $app->register(Larfeus\Signature\SignatureServiceProvider::class);
 ```
 
+## Configuration
+
+```php
+// config/signature.php
+return [
+	'api' => [
+		'driver' => 'HMAC',
+		'options' => [
+		    // hash algorithm
+			'algo' => env('SIGNATURE_API_ALGO', 'sha1'),
+			// hash secret key
+			'secret' => env('SIGNATURE_API_SECRET'),
+			// base64 encoding generating signature
+			'base64' => true,
+			// sort and filter array data (only for arrays)
+			'normalize' => false,
+			// raw_output parameter for hash_hmac function calling
+			'raw' => true,
+		],
+	],
+];
+```
+
 ## Usage
 
-Make signature
+Make signature:
 
 ```php
 // using default signer (see configuration file)
@@ -47,7 +70,8 @@ $signature = Signature::signer('rsa')
     ->setPrivateKey('./private.pem')
     ->sign(['foo'=>'bar']);
 ```
-Verification
+
+Manual verification:
 
 ```php
 Signature::verify($signature, 'foobar');
@@ -58,6 +82,15 @@ Signature::signer('hmac')
 Signature::signer('rsa')
     ->setPublicKey('./public.pem')
     ->verify($signature, ['foo'=>'bar']);
+```
+
+Middleware in laravel or lumen application:
+```php
+Route::group(['prefix' => 'api', 'middleware' => 'signature:api'], function () {
+	Route::get('/user/:id', function($id) {
+		return User::findOrFail($id);
+	});
+});
 ```
 
 ## License
