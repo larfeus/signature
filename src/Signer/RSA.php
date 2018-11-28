@@ -1,162 +1,103 @@
 <?php
 
-namespace Liyu\Signature\Signer;
+namespace Larfeus\Signature\Signer;
 
-use Liyu\Signature\Contracts\Signer;
+use Larfeus\Signature\Contracts\Signer;
 
 class RSA extends AbstractSigner implements Signer
 {
     /**
-     * public key for veirfy.
-     *
-     * @var mixed
-     */
-    protected $publicKey;
-
-    /**
-     * private key for sign.
-     *
-     * @var mixed
-     */
-    protected $privateKey;
-
-    /**
-     * algo.
-     *
-     * @var string
-     */
-    protected $algo;
-
-    /**
-     * Constructor.
-     *
-     * @param array $config
-     */
-    public function __construct(array $config = [])
-    {
-        $this->setConfig($config);
-    }
-
-    /**
-     * setPublicKey.
-     *
-     * @param mixed $publicKey
-     *
-     * @return $this
-     */
-    public function setPublicKey($publicKey)
-    {
-        $this->publicKey = $publicKey;
-
-        return $this;
-    }
-
-    /**
-     * getPublicKey.
+     * Public key
      *
      * @return string
      */
     public function getPublicKey()
     {
-        if (is_file($this->publicKey)) {
-            return file_get_contents($this->publicKey);
+        $publicKey = $this->publicKey ?? null;
+
+        if (is_file($publicKey)) {
+            return file_get_contents($publicKey);
         }
 
-        return $this->publicKey;
+        return $publicKey;
     }
 
     /**
-     * setPrivateKey.
-     *
-     * @param mixed $privateKey
-     *
-     * @return $this
-     */
-    public function setPrivateKey($privateKey)
-    {
-        $this->privateKey = $privateKey;
-
-        return $this;
-    }
-
-    /**
-     * getPrivateKey.
+     * Private key
      *
      * @return string
      */
     public function getPrivateKey()
     {
-        if (is_file($this->privateKey)) {
-            return file_get_contents($this->privateKey);
+        $privateKey = $this->privateKey ?? null;
+
+        if (is_file($privateKey)) {
+            return file_get_contents($privateKey);
         }
 
-        return $this->privateKey;
+        return $privateKey;
     }
 
     /**
-     * setAlgo.
-     *
-     * @param string $algo
-     *
-     * @return $this
-     */
-    public function setAlgo($algo)
-    {
-        $this->algo = $algo;
-
-        return $this;
-    }
-
-    /**
-     * getAlgo.
+     * Algo
      *
      * @return string
      */
     public function getAlgo()
     {
-        if ($this->algo && in_array($this->algo, openssl_get_md_methods(true))) {
-            return $this->algo;
+        $default = 'sha256';
+        $algo = $this->algo ?? $default;
+
+        if ($algo && in_array($algo, openssl_get_md_methods(true))) {
+            return $algo;
         }
 
-        return 'sha256';
+        return $default;
     }
 
     /**
-     * make a signature.
-     *
-     * @param array $params
-     *
-     * @return string
+     * Base64
+     * 
+     * @return boolean
+     */
+    public function getBase64()
+    {
+        return $this->base64 ?? true;
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function sign($data)
     {
-        $signString = $this->getSignString($data);
+        $data = $this->convert($data);
 
         $pkeyid = openssl_pkey_get_private($this->getPrivateKey());
 
-        openssl_sign($signString, $signature, $pkeyid, $this->getAlgo());
+        openssl_sign($data, $signature, $pkeyid, $this->getAlgo());
 
         openssl_free_key($pkeyid);
 
-        return base64_encode($signature);
+        if ($this->getBase64()) {
+            $signature = base64_encode($signature);
+        }
+
+        return $signature;
     }
 
     /**
-     * verify a sign.
-     *
-     * @param mixed $sign
-     * @param array $params
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function verify($signature, $data)
     {
-        $signature = base64_decode($signature);
+        if ($this->getBase64()) {
+            $signature = base64_decode($signature);
+        }
 
-        $signString = $this->getSignString($data);
+        $data = $this->convert($data);
 
         $pubkeyid = openssl_pkey_get_public($this->getPublicKey());
 
-        return openssl_verify($signString, $signature, $pubkeyid, $this->getAlgo()) == 1;
+        return openssl_verify($data, $signature, $pubkeyid, $this->getAlgo()) == 1;
     }
 }

@@ -1,12 +1,12 @@
 <?php
 
-namespace Liyu\Signature;
+namespace Larfeus\Signature;
 
 use Closure;
 use InvalidArgumentException;
-use Liyu\Signature\Signer\RSA;
-use Liyu\Signature\Signer\HMAC;
-use Liyu\Signature\Contracts\Signer;
+use Larfeus\Signature\Signer\RSA;
+use Larfeus\Signature\Signer\HMAC;
+use Larfeus\Signature\Contracts\Signer;
 
 class SignatureManager
 {
@@ -46,7 +46,7 @@ class SignatureManager
      *
      * @param string $name
      *
-     * @return \Liyu\Signature\Constracts\Signer
+     * @return \Larfeus\Signature\Constracts\Signer
      */
     public function signer($name = null)
     {
@@ -70,11 +70,10 @@ class SignatureManager
     }
 
     /**
-     * resolve a signer.
+     * Resolve a signer.
      *
      * @param string $name
-     *
-     * @return \Liyu\Signature\Constracts\Signer
+     * @return \Larfeus\Signature\Constracts\Signer
      */
     protected function resolve($name)
     {
@@ -97,17 +96,22 @@ class SignatureManager
         throw new InvalidArgumentException("Signer [{$name}] is not defined.");
     }
 
+    /**
+     * Create custom driver
+     * 
+     * @param array $config 
+     * @return \Larfeus\Signature\Constracts\Signer
+     */
     public function callCustomCreator(array $config)
     {
         return $this->customCreators[$config['driver']]($this->app, $config['options']);
     }
 
     /**
-     * create hmac signer.
+     * Create hmac signer.
      *
      * @param array $config
-     *
-     * @return \Liyu\Signature\Signer\HMAC
+     * @return \Larfeus\Signature\Signer\HMAC
      */
     public function createHMACDriver(array $config)
     {
@@ -118,14 +122,20 @@ class SignatureManager
      * create rsa signer.
      *
      * @param array $config
-     *
-     * @return \Liyu\Signature\Signer\RSA
+     * @return \Larfeus\Signature\Signer\RSA
      */
     public function createRSADriver(array $config)
     {
         return new RSA($config);
     }
 
+    /**
+     * Define custom driver constructor
+     * 
+     * @param string $driver 
+     * @param Closure $callback 
+     * @return type
+     */
     public function extend($driver, Closure $callback)
     {
         $this->customCreators[$driver] = $callback;
@@ -137,7 +147,6 @@ class SignatureManager
      * Get the signer configuration.
      *
      * @param string $name
-     *
      * @return array
      */
     protected function getConfig($name)
@@ -149,8 +158,7 @@ class SignatureManager
      * Dynamically call the default driver instance.
      *
      * @param string $method
-     * @param array  $parameters
-     *
+     * @param array $parameters
      * @return mixed
      */
     public function __call($method, $parameters)

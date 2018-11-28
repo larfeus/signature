@@ -1,4 +1,4 @@
 vendor/
+tests/Signer/openssl.cnf
 composer.lock
 .DS_Store
-/*.php

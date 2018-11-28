@@ -1,7 +1,7 @@
 <?php
 
 use Mockery as m;
-use Liyu\Signature\SignatureManager;
+use Larfeus\Signature\SignatureManager;
 
 class SignatureTest extends PHPUnit_Framework_TestCase
 {

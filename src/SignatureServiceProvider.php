@@ -1,14 +1,17 @@
 <?php
 
-namespace Liyu\Signature;
+namespace Larfeus\Signature;
 
-use Liyu\Signature\SignatureManager;
-use Laravel\Lumen\Application as LumenApplication;
-use Illuminate\Foundation\Application as LaravelApplication;
+use Larfeus\Signature\SignatureManager;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 
-class ServiceProvider extends LaravelServiceProvider
+class SignatureServiceProvider extends LaravelServiceProvider
 {
+    /**
+     * @var boolean
+     */
+    protected $defer = false;
+
     /**
      * Bootstrap.
      */
@@ -18,20 +21,20 @@ class ServiceProvider extends LaravelServiceProvider
     }
 
     /**
-     * setupConfig.
+     * Setup.
      */
     protected function setupConfig()
     {
-        $source = realpath(__DIR__.'/../config/config.php');
+        $source = realpath(__DIR__.'/config/signature.php');
 
-        if ($this->app instanceof LaravelApplication) {
+        if (preg_match('/Lumen/', $this->app->version())) {
+            $this->app->configure('signature');
+        } else {
             if ($this->app->runningInConsole()) {
                 $this->publishes([
                     $source => config_path('signature.php'),
                 ]);
             }
-        } elseif ($this->app instanceof LumenApplication) {
-            $this->app->configure('signature');
         }
 
         $this->mergeConfigFrom($source, 'signature');
@@ -42,11 +45,9 @@ class ServiceProvider extends LaravelServiceProvider
      */
     public function register()
     {
-        $this->app->bind(SignatureManager::class, function ($app) {
+        $this->app->singleton(SignatureManager::class, function ($app) {
             return new SignatureManager($app);
         });
-
-        $this->app->alias(SignatureManager::class, 'signature');
     }
 
     /**
@@ -56,6 +57,8 @@ class ServiceProvider extends LaravelServiceProvider
      */
     public function providers()
     {
-        return ['signature', SignatureManager::class];
+        return [
+            SignatureManager::class
+        ];
     }
 }

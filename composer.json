@@ -1,10 +1,10 @@
 {
-    "name": "liyu/signature",
+    "name": "larfeus/signature",
     "license": "MIT",
     "authors": [
         {
-            "name": "Yu Li",
-            "email": "liyu001989@gmail.com"
+            "name": "Timofeev Yury",
+            "email": "larfeus@gmail.com"
         }
     ],
     "require": {
@@ -18,16 +18,16 @@
     },
     "autoload": {
         "psr-4": {
-            "Liyu\\Signature\\" : "src"
+            "Larfeus\\Signature\\" : "src"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Liyu\\Signature\\ServiceProvider"
+                "Larfeus\\Signature\\ServiceProvider"
             ],
             "aliases": {
-                "Signature": "Liyu\\Signature\\Facade\\Signature"
+                "Signature": "Larfeus\\Signature\\Facade\\Signature"
             }
         }
     }

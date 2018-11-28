@@ -1,10 +1,23 @@
 <?php
 
-namespace Liyu\Signature\Contracts;
+namespace Larfeus\Signature\Contracts;
 
 interface Signer
 {
-    public function sign($signString);
+	/**
+	 * Generate signature
+	 * 
+	 * @param mixed $data 
+	 * @return string
+	 */
+    public function sign($data);
 
-    public function verify($sign, $signString);
+    /**
+     * Verification with specified signature
+     * 
+     * @param string $signature 
+     * @param mixed $data 
+     * @return boolean
+     */
+    public function verify($signature, $data);
 }

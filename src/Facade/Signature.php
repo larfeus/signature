@@ -1,6 +1,6 @@
 <?php
 
-namespace Liyu\Signature\Facade;
+namespace Larfeus\Signature\Facade;
 
 use Illuminate\Support\Facades\Facade;
 
@@ -13,6 +13,6 @@ class Signature extends Facade
      */
     protected static function getFacadeAccessor()
     {
-        return 'signature';
+        return \Larfeus\Signature\SignatureManager::class;
     }
 }

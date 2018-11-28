@@ -1,6 +1,6 @@
 <?php
 
-use Liyu\Signature\Signer\RSA;
+use Larfeus\Signature\Signer\RSA;
 
 class RSATest extends PHPUnit_Framework_TestCase
 {
@@ -25,13 +25,9 @@ class RSATest extends PHPUnit_Framework_TestCase
         $rsa = new RSA();
         $this->assertEquals($rsa->getAlgo(), 'sha256');
 
-        // setConfig
+        // setters
         $rsa->setAlgo('md5');
         $this->assertEquals($rsa->getAlgo(), 'md5');
-        $rsa->setPublicKey('foo.pub');
-        $this->assertEquals($rsa->getPublicKey(), 'foo.pub');
-        $rsa->setPrivateKey('foo');
-        $this->assertEquals($rsa->getPrivateKey(), 'foo');
     }
 
     public function testSign()
@@ -40,6 +36,8 @@ class RSATest extends PHPUnit_Framework_TestCase
         $config = [
             'privateKey' => $this->privateKey,
             'algo' => 'sha256',
+            'normalize' => true,
+            'base64' => true,
         ];
 
         $rsa = new RSA($config);
@@ -63,7 +61,7 @@ class RSATest extends PHPUnit_Framework_TestCase
             'b' => 'b',
             'c' => [
                 'd' => 'd',
-                'e' => '1',
+                'e' => 1,
             ],
         ]);
         openssl_sign($dataString, $signature, $this->privateKey, 'sha256');
@@ -78,6 +76,8 @@ class RSATest extends PHPUnit_Framework_TestCase
         $config = [
             'publicKey' => $this->publicKey,
             'algo' => 'sha256',
+            'normalize' => false,
+            'base64' => true,
         ];
 
         $rsa = new RSA($config);
@@ -99,14 +99,7 @@ class RSATest extends PHPUnit_Framework_TestCase
             ],
             'a' => 'a',
         ];
-        $dataString = json_encode([
-            'a' => 'a',
-            'b' => 'b',
-            'c' => [
-                'd' => 'd',
-                'e' => '1',
-            ],
-        ]);
+        $dataString = json_encode($data);
         openssl_sign($dataString, $signature, $this->privateKey, 'sha256');
         $target = base64_encode($signature);
 
@@ -115,13 +108,17 @@ class RSATest extends PHPUnit_Framework_TestCase
 
     protected function generatePems()
     {
-        $new_key_pair = openssl_pkey_new([
+        $config = array();
+        $config['config'] = dirname(__FILE__) . '/openssl.cnf';
+
+        $pkey = openssl_pkey_new([
             'private_key_bits' => 2048,
             'private_key_type' => OPENSSL_KEYTYPE_RSA,
-        ]);
-        openssl_pkey_export($new_key_pair, $private_key_pem);
+        ] + $config);
+        openssl_pkey_export($pkey, $private_key_pem, null, $config);
 
-        $details = openssl_pkey_get_details($new_key_pair);
+        $details = openssl_pkey_get_details($pkey);
+
         $this->publicKey = $details['key'];
         $this->privateKey = $private_key_pem;
     }

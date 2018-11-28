@@ -1,69 +1,111 @@
 <?php
 
-namespace Liyu\Signature\Signer;
+namespace Larfeus\Signature\Signer;
 
 abstract class AbstractSigner
 {
     /**
-     * convert sign data.
-     *
-     * @param mixed $signData
-     *
-     * @return string
+     * Constructor.
+     * 
+     * @param array $config 
      */
-    public function getSignString($signData)
+    public function __construct(array $config = [])
     {
-        if (! is_array($signData)) {
-            return $signData;
-        }
-
-        $params = $this->sort($signData);
-
-        return json_encode($params);
+        $this->setConfig($config);
     }
 
     /**
-     * Deep ksort array.
-     *
-     * @param mixed $params
-     *
-     * @return array
+     * Config setters
+     * 
+     * @param string $method 
+     * @param array $arguments 
      */
-    protected function sort($params)
+    public function __call($method, $arguments)
     {
-        $deepSort = function (&$params) use (&$deepSort) {
-            if (is_array($params)) {
-                $params = array_filter($params);
-                ksort($params);
-                array_walk($params, $deepSort);
-            } else {
-                // convert item to tring
-                $params = (string) $params;
+        if (preg_match('/^set(.*)$/', $method, $matches)) {
+
+            $getMethod = 'get' . $matches[1];
+
+            if (method_exists($this, $getMethod)) {
+                $this->{ lcfirst($matches[1]) } = array_pop($arguments);
             }
-
-            return $params;
-        };
-
-        return $deepSort($params);
+        }
     }
 
     /**
-     * setConfig.
+     * Set configuration.
      *
      * @param array $config
-     *
      * @return $this
      */
     public function setConfig(array $config)
     {
         foreach ($config as $key => $value) {
-            $method = 'set'.ucfirst($key);
-
+            $method = 'get' . ucfirst($key);
             if (method_exists($this, $method)) {
-                $this->$method($value);
+                $this->{$key} = $value;
             }
         }
 
         return $this;
+    }
+
+    /**
+     * Sorting
+     * 
+     * @return boolean
+     */
+    public function getNormalize()
+    {
+        return $this->normalize ?? false;
+    }
+
+    /**
+     * Json
+     * 
+     * @return boolean
+     */
+    public function getJson()
+    {
+        return $this->json ?? JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
+    }
+
+    /**
+     * Convert signature data
+     *
+     * @param mixed $data
+     * @return string
+     */
+    public function convert($data)
+    {
+        if (is_scalar($data)) {
+            return $data;
+        }
+        
+        if ($this->getNormalize()) {
+            $data = $this->normalize($data);
+        }
+
+        return json_encode($data, $this->getJson());
+    }
+
+    /**
+     * Normalization
+     * 
+     * @param mixed $data 
+     * @return mixed
+     */
+    public function normalize($data)
+    {
+        $deepSort = function (&$data) use (&$deepSort) {
+            if (is_array($data)) {
+                $data = array_filter($data);
+                ksort($data);
+                array_walk($data, $deepSort);
+            }
+            return $data;
+        };
+
+        return $deepSort($data);
     }
 }
